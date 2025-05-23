@@ -59,23 +59,12 @@ app.get('/', (req, res) => {
 
 
 app.use(express.json());
-const allowOrigins = [
-   // production
-];
 
-const allowedOrigins = ['http://localhost:5173',
-  'https://byc-zeta.vercel.app/'];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-};
+app.use(cors({
+  origin: 'https://byc-zeta.vercel.app', // allow Vercel frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true // if you're using cookies or authorization headers
+}));
 
 
 

@@ -1,10 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log('Environment loaded at startup:');
-console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
-console.log('STRIPE_SECRET_KEY prefix:', process.env.STRIPE_SECRET_KEY?.substring(0, 10));
-
 import express from 'express';
 import cors from 'cors';
 import './models/product.js';
@@ -25,6 +21,7 @@ import addressRouter from './routes/addressRoute.js';
 import orderRouter from './routes/orderRoute.js';
 import wishlistRouter from './routes/wishlistRoute.js';
 import { stripeWebhook } from './controllers/orderController.js';
+import connectDB from './config/db.js';
 
 const app = express();
 
@@ -50,10 +47,7 @@ try {
   process.exit(1);
 }
 
-mongoose
-  .connect('mongodb://localhost/byc-server')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.log('Could not connect to MongoDB', err));
+await connectDB();
 
 const allowOrigins = ['http://localhost:5173'];
 

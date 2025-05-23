@@ -53,6 +53,11 @@ const allowOrigins = ['http://localhost:5173'];
 
 app.post('/stripe', express.raw({type: 'application/json'}), stripeWebhook);
 
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
+
 app.use(express.json());
 app.use(cors({
   origin: allowOrigins,

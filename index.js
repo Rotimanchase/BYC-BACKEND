@@ -26,19 +26,16 @@ import connectDB from './config/db.js';
 const app = express();
 
 // Check JWT key
-let jwtKey;
-try {
-  jwtKey = config.get('jwtPrivateKey');
-} catch (error) {
-  jwtKey = process.env.JWT_SECRET;
-}
+// Simple JWT setup using only environment variables
+const jwtKey = process.env.JWT_SECRET;
 
 if (!jwtKey) {
-  console.error('FATAL ERROR: JWT key is not defined.');
+  console.error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
+  console.error('Please add JWT_SECRET=your_secret_key to your .env file');
   process.exit(1);
 }
 
-process.env.JWT_SECRET = jwtKey;
+console.log('✅ JWT_SECRET loaded successfully');
 
 try {
   connectCloudinary();

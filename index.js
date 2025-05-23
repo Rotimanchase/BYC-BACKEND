@@ -61,32 +61,32 @@ app.get('/', (req, res) => {
 app.use(express.json());
 
 // In your server.js
+// Update your backend CORS configuration
 const allowOrigins = [
   'http://localhost:5173',
-  'https://byc-zeta.vercel.app/', // Add your Vercel URL
-  'https://*.vercel.app', // Allow all Vercel subdomains
+  'https://byc-zeta.vercel.app', // Remove trailing slash
+  'https://byc-backend.vercel.app', // Add your backend URL too
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('🔍 Request origin:', origin); // Debug log
+    
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    if (allowOrigins.some(allowedOrigin => {
-      if (allowedOrigin.includes('*')) {
-        return origin.includes('.vercel.app');
-      }
-      return origin === allowedOrigin;
-    })) {
+    // Check if origin is in allowed list or is a vercel app
+    if (allowOrigins.includes(origin) || origin.includes('.vercel.app')) {
       return callback(null, true);
     }
     
+    console.warn('❌ CORS blocked origin:', origin);
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
-  optionsSuccessStatus: 200 // For legacy browser support
+  optionsSuccessStatus: 200
 }));
 
 

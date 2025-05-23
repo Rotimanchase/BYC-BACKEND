@@ -60,21 +60,24 @@ app.get('/', (req, res) => {
 
 app.use(express.json());
 const allowOrigins = [
-  'http://localhost:5173', // for dev
-  'https://bycc-j8lp2tqj9-rotimans-projects.vercel.app' // production
+   // production
 ];
 
-app.use(cors({
+const allowedOrigins = ['http://localhost:5173',
+  'https://byc-zeta.vercel.app/'];
+
+const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin) || !origin) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  credentials: true
-}));
+  credentials: true,
+};
+
+
 
 
 app.use('/api/user', userRouter);

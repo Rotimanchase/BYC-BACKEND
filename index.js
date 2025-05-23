@@ -60,10 +60,33 @@ app.get('/', (req, res) => {
 
 app.use(express.json());
 
+// In your server.js
+const allowOrigins = [
+  'http://localhost:5173',
+  'https://byc-zeta.vercel.app/', // Add your Vercel URL
+  'https://*.vercel.app', // Allow all Vercel subdomains
+];
+
 app.use(cors({
-  origin: 'https://byc-zeta.vercel.app', // allow Vercel frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true // if you're using cookies or authorization headers
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowOrigins.some(allowedOrigin => {
+      if (allowedOrigin.includes('*')) {
+        return origin.includes('.vercel.app');
+      }
+      return origin === allowedOrigin;
+    })) {
+      return callback(null, true);
+    }
+    
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true,
+  optionsSuccessStatus: 200 // For legacy browser support
 }));
 
 

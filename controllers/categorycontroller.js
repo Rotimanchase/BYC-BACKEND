@@ -6,7 +6,6 @@ export const getAll = async(req, res) => {
         const categories = await Category.find().sort('name')
         return res.json({success: true, categories})
     }catch(error){
-    //    console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 }
@@ -24,7 +23,6 @@ export const createCategory = async(req, res) => {
         return res.json({success: true, category})
     } 
     catch (error) {
-     //   console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 }
@@ -41,7 +39,6 @@ export const getSingleCategory = async(req, res) => {
         return res.json({success: true, category})
     } 
     catch (error) {
-        console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 }
@@ -64,7 +61,6 @@ export const updateCategory = async(req, res) => {
         return res.json({ success: true, category: category });
     } 
     catch (error) {
-        console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 }
@@ -81,7 +77,6 @@ export const deleteCategory = async(req, res) => {
         return res.json({ success: true, message: 'Category deleted successfully', category });
     } 
     catch (error) {
-     //   console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 }

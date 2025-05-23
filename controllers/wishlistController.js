@@ -1,5 +1,3 @@
-// const Wishlist = require('../models/wishlistModel');
-// const Product = require('../models/productModel');
 
 import Wishlist from "../models/wishlist.js";
 

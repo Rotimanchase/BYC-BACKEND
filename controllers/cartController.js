@@ -6,7 +6,6 @@ export const addToCart = async (req, res) => {
   try {
     const userId = req.userId || req.body.userId;
     const { productId, quantity, size, color } = req.body;
-    console.log('Add to cart input:', { userId, productId, quantity, size, color });
 
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Authentication required: No user ID provided' });
@@ -26,10 +25,8 @@ export const addToCart = async (req, res) => {
 
     const product = await Product.findById(productId);
     if (!product) {
-      console.log('Product not found:', productId);
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
-    // console.log('Found product:', { _id: product._id, name: product.productName, stock: product.productStock });
 
     if (product.productStock < quantity) {
       return res.status(400).json({
@@ -87,29 +84,8 @@ export const addToCart = async (req, res) => {
     }, 0);
 
     await cart.save();
-    console.log('Cart saved to DB:', {
-      userId,
-      items: cart.items.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        size: item.size,
-        color: item.color,
-      })),
-      total: cart.total,
-    });
 
     const populatedCart = await Cart.findById(cart._id).populate('items.productId');
-    // console.log('Populated cart:', {
-    //   userId,
-    //   items: populatedCart.items.map((item) => ({
-    //     productId: item.productId?._id,
-    //     name: item.productId?.productName,
-    //     quantity: item.quantity,
-    //     size: item.size,
-    //     color: item.color,
-    //   })),
-    //   total: populatedCart.total,
-    // });
 
     res.json({ success: true, cart: populatedCart });
   } catch (error) {
@@ -136,7 +112,6 @@ export const getCart = async (req, res) => {
     });
 
     if (!cart) {
-      console.log('Cart not found for user:', userId);
       return res.json({ success: true, cart: { items: [], total: 0 } });
     }
 
@@ -233,7 +208,6 @@ export const updateCart = async (req, res) => {
     );
 
     if (itemIndex < 0) {
-      // console.log('Item not found in cart:', { productId, size, color });
       return res.status(404).json({ success: false, message: 'Item not found in cart' });
     }
 
@@ -325,8 +299,6 @@ export const clearCart = async (req, res) => {
     cart.items = [];
     cart.total = 0;
     await cart.save();
-
-    console.log("Cart cleared for user:", userId.toString());
 
     return res.json({ success: true, message: "Cart cleared", cart });
   } catch (error) {

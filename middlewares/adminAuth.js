@@ -4,7 +4,6 @@ import config from 'config';
 function adminAuth(req, res, next) {
   const token = req.header('x-auth-token') || req.header('X-Auth-Token');
   if (!token) {
-    console.log('No token provided for request:', req.url);
     return res.status(401).json({ success: false, message: 'Access denied. No token provided' });
   }
   try {

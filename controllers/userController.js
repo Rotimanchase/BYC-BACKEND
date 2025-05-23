@@ -28,7 +28,6 @@ export const register = async (req, res) => {
         const token = user.generateAuthToken();
         return res.json({ success: true, token, user: _.pick(user, ['_id', 'name', 'email']) });
     } catch (error) {
-        console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 };
@@ -57,7 +56,7 @@ export const login = async (req, res) => {
             user: _.pick(user, ['_id', 'name', 'email']),
         });
     } catch (error) {
-        console.log(error.message);
+        // console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 };
@@ -70,7 +69,6 @@ export const me = async (req, res) => {
         }
         return res.json({ success: true, user });
     } catch (error) {
-        console.log(error.message);
         return res.json({ success: false, message: error.message });
     }
 };

@@ -60,7 +60,7 @@ app.get('/', (req, res) => {
 
 app.use(express.json());
 app.use(cors({
-  origin: allowOrigins,
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true
 }));

@@ -49,7 +49,7 @@ try {
 
 await connectDB();
 
-const allowOrigins = ['http://localhost:5173', 'https://byc-backend.vercel.app/'];
+const allowOrigins = ['http://localhost:5173', 'https://byc-backend.vercel.app'];
 
 app.post('/stripe', express.raw({type: 'application/json'}), stripeWebhook);
 

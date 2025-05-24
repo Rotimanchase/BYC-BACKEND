@@ -49,7 +49,7 @@ try {
 
 await connectDB();
 
-// const allowOrigins = ['http://localhost:5173', 'https://bycc-j8lp2tqj9-rotimans-projects.vercel.app'];
+const allowOrigins = ['http://localhost:5173', 'https://byc-backend.vercel.app/'];
 
 app.post('/stripe', express.raw({type: 'application/json'}), stripeWebhook);
 
@@ -59,19 +59,11 @@ app.get('/', (req, res) => {
 
 
 app.use(express.json());
-const allowOrigins = [
-  'http://localhost:5173', // for dev
-  'https://byc-zeta.vercel.app/' // production
-];
-
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
-
-
+app.use(cors({
+  origin: allowOrigins,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  credentials: true
+}));
 
 app.use('/api/user', userRouter);
 app.use('/api/admin', adminRouter);

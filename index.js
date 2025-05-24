@@ -1,31 +1,39 @@
+// Load environment variables first
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Core imports
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
+import config from 'config';
+
+// Import models
 import './models/product.js';
 import './models/cart.js';
 import './models/user.js';
 
-
-import mongoose from 'mongoose';
-import config from 'config';
+// Import routes
 import userRouter from './routes/userRoute.js';
+import adminRouter from './routes/adminRoute.js';
 import categoryRouter from './routes/categoryRoute.js';
 import productRouter from './routes/productRoute.js';
 import cartRouter from './routes/cartRoute.js';
-import connectCloudinary from './config/cloudinary.js';
 import blogRouter from './routes/blogRoute.js';
-import adminRouter from './routes/adminRoute.js';
 import addressRouter from './routes/addressRoute.js';
 import orderRouter from './routes/orderRoute.js';
 import wishlistRouter from './routes/wishlistRoute.js';
-import { stripeWebhook } from './controllers/orderController.js';
+
+// Import utilities
+import connectCloudinary from './config/cloudinary.js';
 import connectDB from './config/db.js';
+import { stripeWebhook } from './controllers/orderController.js';
 
 const app = express();
 
-// Check JWT key
+// ==================
+// ✅ JWT CONFIGURATION
+// ==================
 let jwtKey;
 try {
   jwtKey = config.get('jwtPrivateKey');
@@ -34,58 +42,59 @@ try {
 }
 
 if (!jwtKey) {
-  console.error('FATAL ERROR: JWT key is not defined.');
+  console.error('❌ FATAL ERROR: JWT key is not defined.');
   process.exit(1);
 }
 
-process.env.JWT_SECRET = jwtKey;
+process.env.JWT_SECRET = jwtKey; // Make sure other files using process.env.JWT_SECRET can access it
+console.log('✅ JWT key loaded successfully');
 
+// ==================
+// ✅ CONNECT CLOUDINARY & DB
+// ==================
 try {
-  connectCloudinary();
-} catch (error) {
-  console.error('Failed to start server due to Cloudinary error:', error.message);
+  await connectCloudinary();
+  await connectDB();
+  console.log('✅ Connected to Cloudinary and MongoDB');
+} catch (err) {
+  console.error('❌ Failed to connect to service:', err.message);
   process.exit(1);
 }
 
-await connectDB();
+// ==================
+// ✅ STRIPE WEBHOOK (must come before bodyParser)
+// ==================
+app.post('/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
 
-// const allowOrigins = ['http://localhost:5173', 'https://byc-backend.vercel.app'];
-
-app.post('/stripe', express.raw({type: 'application/json'}), stripeWebhook);
-
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
-
+// ==================
+// ✅ MIDDLEWARE
+// ==================
 app.use(express.json());
 
 const allowOrigins = [
   'http://localhost:5173',
-  'https://byc-zeta.vercel.app', // Remove trailing slash
-  'https://byc-backend.vercel.app', // Add your backend URL too
+  'https://byc-zeta.vercel.app',
+  'https://byc-backend.vercel.app',
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('🔍 Request origin:', origin); // Debug log
-    
-    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
-    // Check if origin is in allowed list or is a vercel app
     if (allowOrigins.includes(origin) || origin.includes('.vercel.app')) {
       return callback(null, true);
     }
-    
-    console.warn('❌ CORS blocked origin:', origin);
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
+    console.warn('❌ CORS blocked:', origin);
+    return callback(new Error('CORS not allowed for this origin'), false);
   },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   optionsSuccessStatus: 200
 }));
 
+// ==================
+// ✅ ROUTES
+// ==================
+app.get('/', (req, res) => res.send('API is running...'));
 
 app.use('/api/user', userRouter);
 app.use('/api/admin', adminRouter);
@@ -97,5 +106,8 @@ app.use('/api/address', addressRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/wishlist', wishlistRouter);
 
-const port = process.env.PORT || 4800;
-app.listen(port, () => console.log(`listening on port ${port}...`));
+// ==================
+// ✅ SERVER LISTEN
+// ==================
+const PORT = process.env.PORT || 4800;
+app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));

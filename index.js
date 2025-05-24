@@ -49,7 +49,7 @@ try {
 
 await connectDB();
 
-const allowOrigins = ['http://localhost:5173', 'https://byc-backend.vercel.app'];
+// const allowOrigins = ['http://localhost:5173', 'https://byc-backend.vercel.app'];
 
 app.post('/stripe', express.raw({type: 'application/json'}), stripeWebhook);
 
@@ -58,12 +58,33 @@ app.get('/', (req, res) => {
 });
 
 
-app.use(express.json());
+const allowOrigins = [
+  'http://localhost:5173',
+  'https://byc-zeta.vercel.app', // Remove trailing slash
+  'https://byc-backend.vercel.app', // Add your backend URL too
+];
+
 app.use(cors({
-  origin: allowOrigins,
+  origin: function (origin, callback) {
+    console.log('🔍 Request origin:', origin); // Debug log
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list or is a vercel app
+    if (allowOrigins.includes(origin) || origin.includes('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    console.warn('❌ CORS blocked origin:', origin);
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
+
 
 app.use('/api/user', userRouter);
 app.use('/api/admin', adminRouter);

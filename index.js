@@ -57,6 +57,7 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+app.use(express.json());
 
 const allowOrigins = [
   'http://localhost:5173',

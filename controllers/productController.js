@@ -1,10 +1,11 @@
 import Product from "../models/product.js";
 import Category from "../models/category.js";
 
+
 export const addProduct = async (req, res) => {
   try {
     if (!req.body) {
-      return res.status(400).json({ success: false, message: 'Request body is missing or not parsed' });
+      return res.status(400).json({ success: false, message: "Request body is missing or not parsed" });
     }
 
     const {
@@ -20,6 +21,7 @@ export const addProduct = async (req, res) => {
       productImage,
     } = req.body;
 
+    // Validate required fields
     if (
       !productName ||
       !productNumber ||
@@ -31,83 +33,129 @@ export const addProduct = async (req, res) => {
       !Array.isArray(productImage) ||
       productImage.length === 0
     ) {
-      return res.status(400).json({ success: false, message: 'All required fields and at least one image URL are required' });
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${[
+          !productName && "productName",
+          !productNumber && "productNumber",
+          !category && "category",
+          !productPrice && "productPrice",
+          !productStock && "productStock",
+          !productDescription && "productDescription",
+          (!productImage || !Array.isArray(productImage) || productImage.length === 0) && "productImage",
+        ]
+          .filter(Boolean)
+          .join(", ")}`,
+      });
     }
 
     // Validate image URLs
     for (const url of productImage) {
-      if (!url.startsWith('https://res.cloudinary.com/')) {
-        return res.status(400).json({ success: false, message: 'All image URLs must be valid Cloudinary URLs' });
+      if (!url || typeof url !== "string" || !url.startsWith("https://res.cloudinary.com/")) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid image URL: ${url}. Must be a valid Cloudinary URL`,
+        });
       }
     }
 
-    const validCategories = ['Men', 'Women', 'Children'];
+    // Validate category
+    const validCategories = ["Men", "Women", "Children"];
     if (!validCategories.includes(category)) {
-      return res.status(400).json({ success: false, message: `Category must be one of: ${validCategories.join(', ')}` });
+      return res.status(400).json({
+        success: false,
+        message: `Category must be one of: ${validCategories.join(", ")}`,
+      });
     }
-    const categoryDoc = await Category.findOne({ name: category });
+    let categoryDoc = await Category.findOne({ name: category });
     if (!categoryDoc) {
-      return res.status(400).json({ success: false, message: `Category '${category}' not found in database` });
+      // Auto-create category if not found
+      categoryDoc = await Category.create({ name: category });
+      console.log(`Created category: ${category}`);
+    } else {
+      console.log(`Found category: ${category}`);
     }
 
+    // Validate price and stock
     const price = Number(productPrice);
     const stockTotal = Number(productStock);
     if (isNaN(price) || price < 0) {
-      return res.status(400).json({ success: false, message: 'Product price must be a non-negative number' });
+      return res.status(400).json({ success: false, message: "Product price must be a non-negative number" });
     }
     if (isNaN(stockTotal) || stockTotal < 1) {
-      return res.status(400).json({ success: false, message: 'Stock must be at least 1' });
+      return res.status(400).json({ success: false, message: "Stock must be at least 1" });
     }
 
-    const validSizes = ['S', 'M', 'L', 'XL', 'XXL'];
-    const validColors = ['Red', 'Blue', 'Green', 'Black', 'White', 'Yellow'];
+    // Validate sizes and colors
+    const validSizes = ["S", "M", "L", "XL", "XXL"];
+    const validColors = ["Red", "Blue", "Green", "Black", "White", "Yellow"];
     const sizesArray = Array.isArray(sizes) ? sizes : sizes ? JSON.parse(sizes) : [];
     const colorsArray = Array.isArray(colors) ? colors : colors ? JSON.parse(colors) : [];
     if (sizesArray.some((size) => !validSizes.includes(size))) {
-      return res.status(400).json({ success: false, message: `Sizes must be one of: ${validSizes.join(', ')}` });
+      return res.status(400).json({
+        success: false,
+        message: `Sizes must be one of: ${validSizes.join(", ")}`,
+      });
     }
     if (colorsArray.some((color) => !validColors.includes(color))) {
-      return res.status(400).json({ success: false, message: `Colors must be one of: ${validColors.join(', ')}` });
+      return res.status(400).json({
+        success: false,
+        message: `Colors must be one of: ${validColors.join(", ")}`,
+      });
     }
 
+    // Validate stock array
     let stockArray = [];
     if (stock) {
       stockArray = Array.isArray(stock) ? stock : JSON.parse(stock);
       if (!Array.isArray(stockArray)) {
-        return res.status(400).json({ success: false, message: 'Stock must be an array of { size, color, quantity }' });
+        return res.status(400).json({
+          success: false,
+          message: "Stock must be an array of { size, color, quantity }",
+        });
       }
       for (const item of stockArray) {
         if (
-          !item.size || !validSizes.includes(item.size) ||
-          !item.color || !validColors.includes(item.color) ||
-          typeof item.quantity !== 'number' || item.quantity < 0
+          !item.size ||
+          !validSizes.includes(item.size) ||
+          !item.color ||
+          !validColors.includes(item.color) ||
+          typeof item.quantity !== "number" ||
+          item.quantity < 0
         ) {
-          return res.status(400).json({ success: false, message: 'Each stock item must have valid size, color, and non-negative quantity' });
+          return res.status(400).json({
+            success: false,
+            message: `Invalid stock item: ${JSON.stringify(item)}. Must have valid size, color, and non-negative quantity`,
+          });
         }
       }
       const stockSum = stockArray.reduce((sum, item) => sum + item.quantity, 0);
       if (stockSum !== stockTotal) {
-        return res.status(400).json({ success: false, message: 'Sum of stock quantities must equal productStock' });
+        return res.status(400).json({
+          success: false,
+          message: `Sum of stock quantities (${stockSum}) must equal productStock (${stockTotal})`,
+        });
       }
     }
 
+    // Create product
     const product = new Product({
       productName,
       productNumber,
-      category: { name: category },
+      category: { name: category }, // Store as { name: "Men" }
       productPrice: price,
       productStock: stockTotal,
       productDescription,
       sizes: sizesArray,
       colors: colorsArray,
       stock: stockArray,
-      productImage, // Use Cloudinary URLs from req.body
+      productImage,
     });
 
     await product.save();
-    res.json({ success: true, message: 'Product added successfully', product });
+    res.status(201).json({ success: true, message: "Product added successfully", product });
   } catch (error) {
-    console.error('Error adding product:', error.message, error.stack);
+    console.error("Error adding product:", error.message, error.stack);
     res.status(500).json({ success: false, message: `Server error: ${error.message}` });
   }
 };

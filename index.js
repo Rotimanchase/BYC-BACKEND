@@ -9,7 +9,6 @@ import './models/user.js';
 
 
 import mongoose from 'mongoose';
-import config from 'config';
 import userRouter from './routes/userRoute.js';
 import categoryRouter from './routes/categoryRoute.js';
 import productRouter from './routes/productRoute.js';
@@ -25,8 +24,6 @@ import connectDB from './config/db.js';
 
 const app = express();
 
-// Check JWT key
-// Simple JWT setup using only environment variables
 const jwtKey = process.env.JWT_SECRET;
 
 if (!jwtKey) {

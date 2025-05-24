@@ -9,6 +9,7 @@ import './models/user.js';
 
 
 import mongoose from 'mongoose';
+import config from 'config';
 import userRouter from './routes/userRoute.js';
 import categoryRouter from './routes/categoryRoute.js';
 import productRouter from './routes/productRoute.js';
@@ -24,15 +25,20 @@ import connectDB from './config/db.js';
 
 const app = express();
 
-const jwtKey = process.env.JWT_SECRET;
+// Check JWT key
+let jwtKey;
+try {
+  jwtKey = config.get('jwtPrivateKey');
+} catch (error) {
+  jwtKey = process.env.JWT_SECRET;
+}
 
 if (!jwtKey) {
-  console.error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
-  console.error('Please add JWT_SECRET=your_secret_key to your .env file');
+  console.error('FATAL ERROR: JWT key is not defined.');
   process.exit(1);
 }
 
-console.log('✅ JWT_SECRET loaded successfully');
+process.env.JWT_SECRET = jwtKey;
 
 try {
   connectCloudinary();
@@ -53,36 +59,17 @@ app.get('/', (req, res) => {
 
 
 app.use(express.json());
-
-// In your server.js
-// Update your backend CORS configuration
 const allowOrigins = [
-  'http://localhost:5173',
-  'https://byc-zeta.vercel.app', // Remove trailing slash
-  'https://byc-backend.vercel.app', // Add your backend URL too
+  'http://localhost:5173', // for dev
+  'https://byc-zeta.vercel.app/' // production
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log('🔍 Request origin:', origin); // Debug log
-    
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin is in allowed list or is a vercel app
-    if (allowOrigins.includes(origin) || origin.includes('.vercel.app')) {
-      return callback(null, true);
-    }
-    
-    console.warn('❌ CORS blocked origin:', origin);
-    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-    return callback(new Error(msg), false);
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
-
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
 
 
